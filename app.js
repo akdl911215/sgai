@@ -10,7 +10,9 @@ const PORT = process.env.PORT || 8080;
 const hostname = "127.0.0.1";
 
 const multipart = require("connect-multiparty");
+const cors = require("cors");
 app.use(multipart());
+app.use(cors());
 
 // app.use(cors());
 app.listen(PORT, hostname, () => {
