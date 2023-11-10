@@ -14,6 +14,7 @@ app.use(multipart());
 app.use(cors());
 
 const axios = require("axios");
+const request = require("request");
 
 app.set("port", process.env.PORT || 3000);
 
@@ -29,7 +30,8 @@ app.post("/ai", async (req, res, next) => {
   try {
     console.log("req.files : ", req.files);
 
-    const audioFilePath = await req.files.filename.path;
+    // 1
+    const audioFilePath = await req.files.filename1.path;
     console.log("audioFilePath : ", audioFilePath);
     if (!audioFilePath) {
       res.json({ error: "notfound path" });
@@ -45,22 +47,141 @@ app.post("/ai", async (req, res, next) => {
       },
     };
 
-    // const request = require("request");
+    // 2
+    const audioFilePath2 = await req.files.filename2.path;
+    console.log("audioFilePath2 : ", audioFilePath2);
+    if (!audioFilePath2) {
+      res.json({ error: "notfound path" });
+      throw new Error("notfound path");
+    }
+
+    const audioData2 = await fs.readFileSync(audioFilePath2);
+
+    const requestJson2 = {
+      argument: {
+        language_code: languageCode,
+        audio: audioData2.toString("base64"),
+      },
+    };
+
+    // 3
+    const audioFilePath3 = await req.files.filename3.path;
+    console.log("audioFilePath3 : ", audioFilePath3);
+    if (!audioFilePath3) {
+      res.json({ error: "notfound path" });
+      throw new Error("notfound path");
+    }
+
+    const audioData3 = await fs.readFileSync(audioFilePath3);
+
+    const requestJson3 = {
+      argument: {
+        language_code: languageCode,
+        audio: audioData3.toString("base64"),
+      },
+    };
+    //
+
+    const request = require("request");
     const options = {
       url: openApiURL,
       body: JSON.stringify(requestJson),
       headers: { "Content-Type": "application/json", Authorization: accessKey },
     };
-
-    const postData = {
-      body: JSON.stringify(requestJson),
+    const options2 = {
+      url: openApiURL,
+      body: JSON.stringify(requestJson2),
+      headers: { "Content-Type": "application/json", Authorization: accessKey },
+    };
+    const options3 = {
+      url: openApiURL,
+      body: JSON.stringify(requestJson3),
       headers: { "Content-Type": "application/json", Authorization: accessKey },
     };
 
-    // let result = {};
+    const re1 = new Promise((resolve, reject) => {
+      request.post(options, function (error, response, body) {
+        console.log("responseCode = " + response.statusCode);
+        console.log("responseBody = " + body);
 
-    const { data } = await axios.post(options);
-    //   console.log('data : ', data);
+        if (error) {
+          console.log(error);
+          throw new Error(error);
+        }
+
+        const object = JSON.parse(body);
+
+        const strSplit = object?.return_object?.recognized?.split(" ");
+        console.log("strSplit : ", strSplit);
+
+        // res.json({
+        //   token: object?.return_object?.recognized,
+        //   count: strSplit.length,
+        // })
+
+        resolve({
+          token: object?.return_object?.recognized,
+          count: strSplit.length,
+        });
+      });
+    });
+
+    const re2 = new Promise((resolve, reject) => {
+      request.post(options, function (error, response, body) {
+        console.log("responseCode = " + response.statusCode);
+        console.log("responseBody = " + body);
+
+        if (error) {
+          console.log(error);
+          throw new Error(error);
+        }
+
+        const object = JSON.parse(body);
+
+        const strSplit = object?.return_object?.recognized?.split(" ");
+        console.log("strSplit : ", strSplit);
+
+        // res.json({
+        //   token: object?.return_object?.recognized,
+        //   count: strSplit.length,
+        // })
+
+        resolve({
+          token: object?.return_object?.recognized,
+          count: strSplit.length,
+        });
+      });
+    });
+
+    const re3 = new Promise((resolve, reject) => {
+      request.post(options, function (error, response, body) {
+        console.log("responseCode = " + response.statusCode);
+        console.log("responseBody = " + body);
+
+        if (error) {
+          console.log(error);
+          throw new Error(error);
+        }
+
+        const object = JSON.parse(body);
+
+        const strSplit = object?.return_object?.recognized?.split(" ");
+        console.log("strSplit : ", strSplit);
+
+        // res.json({
+        //   token: object?.return_object?.recognized,
+        //   count: strSplit.length,
+        // })
+
+        resolve({
+          token: object?.return_object?.recognized,
+          count: strSplit.length,
+        });
+      });
+    });
+    Promise.all([re1, re2, re3]).then((value) =>
+      console.log("value : ", value)
+    );
 
     // const response = await request.post(
     //   options,
@@ -89,10 +210,6 @@ app.post("/ai", async (req, res, next) => {
     //     });
     //   }
     // );
-
-    const jsonResponse = JSON.stringify(response);
-
-    console.log("jsonResponse : ", jsonResponse);
   } catch (e) {
     console.log("error : ", e);
   }
