@@ -13,17 +13,7 @@ const cors = require("cors");
 app.use(multipart());
 app.use(cors());
 
-const mysql = require("mysql2/promise");
-const pool = mysql.createPool({
-  host: "13.125.245.156", // MySQL 호스트 주소
-  user: "root", // MySQL 사용자 이름
-  password: "vkfvkfwm1379", // MySQL 비밀번호
-  database: "bbb", // 사용할 데이터베이스 이름
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  port: 51588,
-});
+const axios = require("axios");
 
 app.set("port", process.env.PORT || 3000);
 
@@ -37,15 +27,7 @@ app.listen(app.get("port"), () => {
 
 app.post("/ai", async (req, res, next) => {
   try {
-    const [total, fields5] = await pool.query(
-      "SELECT SUM(a) AS total_a_sum, SUM(b) AS total_b_sum, SUM(c) AS total_c_sum, SUM(total) AS total_sum FROM aaa"
-    );
-    console.log("total : ", total);
-    const { total_a_sum, total_b_sum, total_c_sum, total_sum } = total[0];
-    console.log("쿼리 total_a_sum:", total_a_sum);
-    console.log("쿼리 total_b_sum:", total_b_sum);
-    console.log("쿼리 total_c_sum:", total_c_sum);
-    console.log("쿼리 total_sum:", total_sum);
+    console.log("req.files : ", req.files);
 
     const audioFilePath = await req.files.filename.path;
     console.log("audioFilePath : ", audioFilePath);
@@ -63,44 +45,58 @@ app.post("/ai", async (req, res, next) => {
       },
     };
 
-    const request = require("request");
+    // const request = require("request");
     const options = {
       url: openApiURL,
       body: JSON.stringify(requestJson),
       headers: { "Content-Type": "application/json", Authorization: accessKey },
     };
 
-    const requestValue = await request.post(
-      options,
-      function (error, response, body) {
-        console.log("responseCode = " + response.statusCode);
-        console.log("responseBody = " + body);
+    const postData = {
+      body: JSON.stringify(requestJson),
+      headers: { "Content-Type": "application/json", Authorization: accessKey },
+    };
 
-        if (error) {
-          console.log(error);
-          throw new Error(error);
-        }
+    // let result = {};
 
-        const object = JSON.parse(body);
+    const { data } = await axios.post(options);
+    //   console.log('data : ', data);
 
-        const strSplit = object?.return_object?.recognized?.split(" ");
+    // const response = await request.post(
+    //   options,
+    //   function (error, response, body) {
+    //     console.log("responseCode = " + response.statusCode);
+    //     console.log("responseBody = " + body);
+    //
+    //     if (error) {
+    //       console.log(error);
+    //       throw new Error(error);
+    //     }
+    //
+    //     const object = JSON.parse(body);
+    //
+    //     const strSplit = object?.return_object?.recognized?.split(" ");
+    //     console.log("strSplit : ", strSplit);
+    //
+    //     // res.json({
+    //     //   token: object?.return_object?.recognized,
+    //     //   count: strSplit.length,
+    //     // })
+    //
+    //     res.json({
+    //       token: object?.return_object?.recognized,
+    //       count: strSplit.length,
+    //     });
+    //   }
+    // );
 
-        // res.json({
-        //   token: object?.return_object?.recognized,
-        //   count: strSplit.length,
-        // });
+    const jsonResponse = JSON.stringify(response);
 
-        return {
-          token: object?.return_object?.recognized,
-          count: strSplit.length,
-        };
-      }
-    );
-
-    console.log("requestValue : ", requestValue);
-
-    res.json(requestValue);
+    console.log("jsonResponse : ", jsonResponse);
   } catch (e) {
     console.log("error : ", e);
   }
 });
+
+// 13.124.82.89
+// 52826
