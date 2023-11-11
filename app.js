@@ -13,8 +13,21 @@ const cors = require("cors");
 app.use(multipart());
 app.use(cors());
 
-const axios = require("axios");
-const request = require("request");
+const bodyParser = require("body-parser");
+app.use(bodyParser.json());
+const Hangul = require("hangul-js");
+
+const mysql = require("mysql2/promise");
+const pool = mysql.createPool({
+  host: "13.124.82.89", // MySQL 호스트 주소
+  user: "root", // MySQL 사용자 이름
+  password: "seogang1234", // MySQL 비밀번호
+  database: "bbb", // 사용할 데이터베이스 이름
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  port: 52826,
+});
 
 app.set("port", process.env.PORT || 3000);
 
@@ -26,12 +39,11 @@ app.listen(app.get("port"), () => {
   console.log(app.get("port"), "번 포트에서 대기 중");
 });
 
-app.post("/ai", async (req, res, next) => {
+app.post("/1", async (req, res, next) => {
   try {
     console.log("req.files : ", req.files);
 
-    // 1
-    const audioFilePath = await req.files.filename1.path;
+    const audioFilePath = await req.files.filename.path;
     console.log("audioFilePath : ", audioFilePath);
     if (!audioFilePath) {
       res.json({ error: "notfound path" });
@@ -47,40 +59,58 @@ app.post("/ai", async (req, res, next) => {
       },
     };
 
-    // 2
-    const audioFilePath2 = await req.files.filename2.path;
-    console.log("audioFilePath2 : ", audioFilePath2);
-    if (!audioFilePath2) {
+    const request = require("request");
+    const options = {
+      url: openApiURL,
+      body: JSON.stringify(requestJson),
+      headers: { "Content-Type": "application/json", Authorization: accessKey },
+    };
+
+    await request.post(options, function (error, response, body) {
+      console.log("responseCode = " + response.statusCode);
+      console.log("responseBody = " + body);
+
+      if (error) {
+        console.log(error);
+        throw new Error(error);
+      }
+
+      const object = JSON.parse(body);
+      const strSplit = object?.return_object?.recognized?.split(" ");
+      console.log("strSplit : ", strSplit);
+
+      const arr = Array.from(new Set(strSplit))
+        .map((value) => Hangul.disassemble(value))
+        .filter((value) => "ㄱ" === value[0]);
+      console.log("arr :", arr);
+      res.json({
+        "ㄱ-count": arr.length,
+      });
+    });
+  } catch (e) {
+    console.log("error : ", e);
+  }
+});
+
+app.post("/2", async (req, res, next) => {
+  try {
+    console.log("req.files : ", req.files);
+
+    const audioFilePath = await req.files.filename.path;
+    console.log("audioFilePath : ", audioFilePath);
+    if (!audioFilePath) {
       res.json({ error: "notfound path" });
       throw new Error("notfound path");
     }
 
-    const audioData2 = await fs.readFileSync(audioFilePath2);
+    const audioData = await fs.readFileSync(audioFilePath);
 
-    const requestJson2 = {
+    const requestJson = {
       argument: {
         language_code: languageCode,
-        audio: audioData2.toString("base64"),
+        audio: audioData.toString("base64"),
       },
     };
-
-    // 3
-    const audioFilePath3 = await req.files.filename3.path;
-    console.log("audioFilePath3 : ", audioFilePath3);
-    if (!audioFilePath3) {
-      res.json({ error: "notfound path" });
-      throw new Error("notfound path");
-    }
-
-    const audioData3 = await fs.readFileSync(audioFilePath3);
-
-    const requestJson3 = {
-      argument: {
-        language_code: languageCode,
-        audio: audioData3.toString("base64"),
-      },
-    };
-    //
 
     const request = require("request");
     const options = {
@@ -88,128 +118,120 @@ app.post("/ai", async (req, res, next) => {
       body: JSON.stringify(requestJson),
       headers: { "Content-Type": "application/json", Authorization: accessKey },
     };
-    const options2 = {
+
+    await request.post(options, function (error, response, body) {
+      console.log("responseCode = " + response.statusCode);
+      console.log("responseBody = " + body);
+
+      if (error) {
+        console.log(error);
+        throw new Error(error);
+      }
+
+      const object = JSON.parse(body);
+      const strSplit = object?.return_object?.recognized?.split(" ");
+      console.log("strSplit : ", strSplit);
+
+      const arr = Array.from(new Set(strSplit))
+        .map((value) => Hangul.disassemble(value))
+        .filter((value) => "ㄷ" === value[0]);
+      console.log("arr :", arr);
+      res.json({
+        "ㄷ-count": arr.length,
+      });
+    });
+  } catch (e) {
+    console.log("error : ", e);
+  }
+});
+
+app.post("/3", async (req, res, next) => {
+  try {
+    console.log("req.files : ", req.files);
+
+    const audioFilePath = await req.files.filename.path;
+    console.log("audioFilePath : ", audioFilePath);
+    if (!audioFilePath) {
+      res.json({ error: "notfound path" });
+      throw new Error("notfound path");
+    }
+
+    const audioData = await fs.readFileSync(audioFilePath);
+
+    const requestJson = {
+      argument: {
+        language_code: languageCode,
+        audio: audioData.toString("base64"),
+      },
+    };
+
+    const request = require("request");
+    const options = {
       url: openApiURL,
-      body: JSON.stringify(requestJson2),
+      body: JSON.stringify(requestJson),
       headers: { "Content-Type": "application/json", Authorization: accessKey },
     };
-    const options3 = {
-      url: openApiURL,
-      body: JSON.stringify(requestJson3),
-      headers: { "Content-Type": "application/json", Authorization: accessKey },
-    };
 
-    const re1 = new Promise((resolve, reject) => {
-      request.post(options, function (error, response, body) {
-        console.log("responseCode = " + response.statusCode);
-        console.log("responseBody = " + body);
+    await request.post(options, function (error, response, body) {
+      console.log("responseCode = " + response.statusCode);
+      console.log("responseBody = " + body);
 
-        if (error) {
-          console.log(error);
-          throw new Error(error);
-        }
+      if (error) {
+        console.log(error);
+        throw new Error(error);
+      }
 
-        const object = JSON.parse(body);
+      const object = JSON.parse(body);
+      const strSplit = object?.return_object?.recognized?.split(" ");
+      console.log("strSplit : ", strSplit);
 
-        const strSplit = object?.return_object?.recognized?.split(" ");
-        console.log("strSplit : ", strSplit);
-
-        // res.json({
-        //   token: object?.return_object?.recognized,
-        //   count: strSplit.length,
-        // })
-
-        resolve({
-          token: object?.return_object?.recognized,
-          count: strSplit.length,
-        });
+      const arr = Array.from(new Set(strSplit))
+        .map((value) => Hangul.disassemble(value))
+        .filter((value) => "ㅂ" === value[0]);
+      console.log("arr :", arr);
+      res.json({
+        "ㅂ-count": arr.length,
       });
     });
+  } catch (e) {
+    console.log("error : ", e);
+  }
+});
 
-    const re2 = new Promise((resolve, reject) => {
-      request.post(options, function (error, response, body) {
-        console.log("responseCode = " + response.statusCode);
-        console.log("responseBody = " + body);
+app.get("/ai", async (req, res, next) => {
+  try {
+    console.log("req.query : ", req.query);
+    const { name, sex, age, score1, score2, score3, age_group, phone } =
+      req.query;
 
-        if (error) {
-          console.log(error);
-          throw new Error(error);
-        }
-
-        const object = JSON.parse(body);
-
-        const strSplit = object?.return_object?.recognized?.split(" ");
-        console.log("strSplit : ", strSplit);
-
-        // res.json({
-        //   token: object?.return_object?.recognized,
-        //   count: strSplit.length,
-        // })
-
-        resolve({
-          token: object?.return_object?.recognized,
-          count: strSplit.length,
-        });
-      });
-    });
-
-    const re3 = new Promise((resolve, reject) => {
-      request.post(options, function (error, response, body) {
-        console.log("responseCode = " + response.statusCode);
-        console.log("responseBody = " + body);
-
-        if (error) {
-          console.log(error);
-          throw new Error(error);
-        }
-
-        const object = JSON.parse(body);
-
-        const strSplit = object?.return_object?.recognized?.split(" ");
-        console.log("strSplit : ", strSplit);
-
-        // res.json({
-        //   token: object?.return_object?.recognized,
-        //   count: strSplit.length,
-        // })
-
-        resolve({
-          token: object?.return_object?.recognized,
-          count: strSplit.length,
-        });
-      });
-    });
-    Promise.all([re1, re2, re3]).then((value) =>
-      console.log("value : ", value)
+    const [total, fields5] = await pool.query(
+      `SELECT AVG(score1) AS average_a, AVG(score2) AS average_b, AVG(score3) AS average_c, AVG(total) AS average_total FROM aaa where age_group = '${age_group}'`
     );
+    console.log("total : ", total);
+    const { average_a, average_b, average_c, average_total } = total[0];
+    console.log("쿼리 average_a:", average_a);
+    console.log("쿼리 average_b:", average_b);
+    console.log("쿼리 average_c:", average_c);
+    console.log("쿼리 average_total:", average_total);
 
-    // const response = await request.post(
-    //   options,
-    //   function (error, response, body) {
-    //     console.log("responseCode = " + response.statusCode);
-    //     console.log("responseBody = " + body);
-    //
-    //     if (error) {
-    //       console.log(error);
-    //       throw new Error(error);
-    //     }
-    //
-    //     const object = JSON.parse(body);
-    //
-    //     const strSplit = object?.return_object?.recognized?.split(" ");
-    //     console.log("strSplit : ", strSplit);
-    //
-    //     // res.json({
-    //     //   token: object?.return_object?.recognized,
-    //     //   count: strSplit.length,
-    //     // })
-    //
-    //     res.json({
-    //       token: object?.return_object?.recognized,
-    //       count: strSplit.length,
-    //     });
-    //   }
-    // );
+    const aaaaa = Number(average_a) - Number(score1);
+    const bbbbb = Number(average_b) - Number(score2);
+    const ccccc = Number(average_c) - Number(score3);
+
+    const registerResponse = await pool.query(
+      `INSERT INTO aaa(name, sex, age, score1, score2, score3, age_group, phone) VALUES ('${name}', '${sex}', ${Number(
+        age
+      )}, ${Number(score1)}, ${Number(score2)}, ${Number(
+        score3
+      )}, '${age_group}', '${phone}')`
+    );
+    console.log("registerResponse : ", registerResponse);
+
+    res.json({
+      "DBㄱ - clientㄱ": aaaaa,
+      "DBㄷ - clientㄷ": bbbbb,
+      "DBㅂ - clientㅂ": ccccc,
+    });
   } catch (e) {
     console.log("error : ", e);
   }
